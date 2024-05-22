@@ -1,0 +1,4 @@
+C:\Users\dobr0\OneDrive\Documents\GitHub\CG\x64\Debug\xapobaseredist.pdb
+C:\Users\dobr0\OneDrive\Documents\GitHub\CG\x64\Debug\xaudio2_9redist.pdb
+C:\Users\dobr0\OneDrive\Documents\GitHub\CG\x64\Debug\xaudio2_9redist.dll
+C:\Users\dobr0\OneDrive\Documents\GitHub\CG\CG 1 Laba\x64\Debug\CG 1 Laba.vcxproj.Up2Date

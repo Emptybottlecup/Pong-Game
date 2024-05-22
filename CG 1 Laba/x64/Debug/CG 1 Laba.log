@@ -1,0 +1,5 @@
+﻿  Ball.cpp
+C:\Users\dobr0\OneDrive\Documents\GitHub\CG\Ball.cpp(18,54): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
+C:\Users\dobr0\OneDrive\Documents\GitHub\CG\Ball.cpp(32,39): warning C4267: '=': conversion from 'size_t' to 'UINT', possible loss of data
+C:\Users\dobr0\OneDrive\Documents\GitHub\CG\Ball.cpp(111,54): warning C4267: 'argument': conversion from 'size_t' to 'UINT', possible loss of data
+  CG 1 Laba.vcxproj -> C:\Users\dobr0\OneDrive\Documents\GitHub\CG\x64\Debug\CG 1 Laba.exe
