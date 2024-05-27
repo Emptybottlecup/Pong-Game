@@ -6,11 +6,11 @@
 #include <wrl.h>
 #include <stdio.h>
 #include <vector>
-#include "GameComponent.h"
 #include <fstream>
 #include <sstream>
-#include "GameComponent.h"
 #include "InputDevice.h"
+#include "GameComponent.h"
+
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -18,6 +18,9 @@
 #pragma comment(lib, "dxguid.lib")
 
 class GameComponent;
+class GameStick;
+class Enemy;
+class Ball;
 
 class Game
 {
@@ -47,6 +50,10 @@ public:
 private:
 	int pWidth = 800;
 	int pHeight = 800;
+	int PlayerScore = 0;
+	int EnemyScore = 0;
+	bool start = false;
+	GameStick* pStick;
 	InputDevice* pInput;
 	DisplayWin32 pWindow;
 	std::vector<GameComponent*> pGameComponents;

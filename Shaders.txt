@@ -7,14 +7,19 @@ struct vertexIn
 struct pixelIn
 {
     float4 position : SV_POSITION;
-    float4 color : COLOR;
+    float4 color : COLOR;   
+};
+
+cbuffer ConstantBuffer
+{
+       float offset;
 };
 
 
 pixelIn VSMAIN(vertexIn input)
 {
     pixelIn output;
-    output.position = input.position;
+    output.position = input.position + offset;
     output.color = input.color;
 	return output;
 }
