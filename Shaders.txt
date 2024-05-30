@@ -10,11 +10,10 @@ struct pixelIn
     float4 color : COLOR;   
 };
 
-cbuffer ConstantBuffer
+cbuffer ConstantBuffer : register(b0)
 {
-       float offset;
+       float4 offset;
 };
-
 
 pixelIn VSMAIN(vertexIn input)
 {

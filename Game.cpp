@@ -34,16 +34,25 @@ Game::Game() : pWindow(pWidth, pHeight)
 {
 	pInput = new InputDevice(this);
 	CreateDeviceAndSwapChain();
-	pStick = new GameStick(this, -0.99f, 0.0f, 0.02f, 0.03f);
+	pStick = new GameStick(this, -0.975f, 0.0f, 0.05f, 0.2f);
+	pBall = new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f);
+	pEnemy = new Enemy(this, 0.975f, 0.0f, 0.05f, 0.02f);
+	pGameComponents.push_back(pBall->GetBall());
 	pGameComponents.push_back(pStick->GetStick());
+	pGameComponents.push_back(pEnemy->GetEnemy());
 }
 
 Game::Game(int Width, int Height) : pWidth(Width), pHeight(Height), pWindow(pWidth, pHeight)
 {
 	pInput = new InputDevice(this);
 	CreateDeviceAndSwapChain();
-	pStick = new GameStick(this, 0.0f, 0.0f, 0.05f, 0.2f);
+	pStick = new GameStick(this,-0.975f, 0.0f, 0.01f, 0.2f);
+	pBall = new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f);
+	pEnemy = new Enemy(this, 0.975f, 0.0f, 0.01f, 0.2f);
+	pGameComponents.push_back(pBall->GetBall());
+	pGameComponents.push_back(pEnemy->GetEnemy());
 	pGameComponents.push_back(pStick->GetStick());
+	
 }
 
 void Game::CreateDeviceAndSwapChain()
@@ -154,46 +163,46 @@ void Game::Run()
 		pDeviceContext->ClearRenderTargetView(pRenderTargetView, clearColor);
 
 		auto	curTime = std::chrono::steady_clock::now();
-		float	deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(curTime - PrevTime).count() / 10000.0f;
+		float	deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(curTime - PrevTime).count() / 100000.0f;
 		PrevTime = curTime;
 
 		pDeviceContext->OMSetRenderTargets(1, &pRenderTargetView, nullptr);
-		for (auto object : pGameComponents)
-		{
-			pDeviceContext->VSSetShader(object->GetVertexShader().Get(), nullptr, 0);
-			pDeviceContext->PSSetShader(object->GetPixelShader().Get(), nullptr, 0);
 
-		}
+		pDeviceContext->VSSetShader(pGameComponents[0]->GetVertexShader().Get(), nullptr, 0);
+		pDeviceContext->PSSetShader(pGameComponents[0]->GetPixelShader().Get(), nullptr, 0);
 		
 		pDeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+		if (start)
+		{
+			pEnemy->Update(deltaTime, pBall);
+			if (pInput->IsKeyDown(Keys::S))
+			{
+				pStick->UP_DOWN(Keys::S, deltaTime);
+			}
+			else if (pInput->IsKeyDown(Keys::W))
+			{
+				pStick->UP_DOWN(Keys::W, deltaTime);
+			}
+			pBall->Update(deltaTime, pStick, pEnemy);
+		}
+
 		for (auto object : pGameComponents)
 		{
+			object->Update();
 			object->Draw();
 		}
-		
+
 		if (pInput->IsKeyDown(Keys::Enter))
 		{
 			start = true;
 		}
 
-		if (start)
-		{
-			if (pInput->IsKeyDown(Keys::S))
-			{
-				pStick->UP_DOWN(Keys::S, deltaTime);
-			}
-
-			if (pInput->IsKeyDown(Keys::W))
-			{
-				pStick->UP_DOWN(Keys::W, deltaTime);
-			}
-		}
+	
 		pSwapChain->Present(1, 0);
 	}
 }
 
-/*
 void Game::Update(bool goal)
 {
 	if (!goal)
@@ -228,8 +237,7 @@ void Game::Update(bool goal)
 		EnemyScore = 0;
 	}
 	std::cout << "PRESS ENTER TO CONTINUE" << std::endl;
-
-} */
+}
 
 void Game::DeleteResources()
 {	pDeviceContext->Release();

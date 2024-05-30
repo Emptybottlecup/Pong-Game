@@ -13,9 +13,9 @@ public:
 	virtual void Draw() = 0;
 	virtual void CreateShadersAndInputLayout() = 0;
 	virtual void DestroyResources() = 0;
-	virtual void Reload() = 0;
+	virtual void Reload(DirectX::XMFLOAT4 position) = 0;
 
-	virtual void Update(DirectX::XMFLOAT3 position) = 0;
+	virtual void Update() = 0;
 	virtual Microsoft::WRL::ComPtr<ID3D11VertexShader>& GetVertexShader() = 0;
 
 	virtual Microsoft::WRL::ComPtr<ID3D11PixelShader>& GetPixelShader() = 0;
@@ -39,9 +39,9 @@ public:
 
 	void Draw();
 
-	void Reload();
+	void Reload(DirectX::XMFLOAT4 position);
 
-	void Update(DirectX::XMFLOAT3 position);
+	void Update();
 
 	void DestroyResources();
 
@@ -66,9 +66,18 @@ public:
 	{
 		return pPixelShaderByteCode;
 	}
+
+	Game* GetGame() 
+	{
+		return pGame;
+	}
 protected:
 	std::vector<DirectX::XMFLOAT4> pPoints;
 	std::vector<int> pIndices;
+	ID3D11Buffer* ConstantBuff;
+	DirectX::XMFLOAT4 pPosition = { 0.0f, 0.0f, 0.0f, 0.0f };
+	ID3D11Buffer* VertexBuffer;
+	ID3D11Buffer* IndexBuffer;
 	Game* pGame;
 private:
 	Microsoft::WRL::ComPtr<ID3D11VertexShader> pVertexShader;
@@ -95,6 +104,8 @@ public:
 
 	float GetWidth();
 
+	void Reset();
+
 	float GetHeight();
 	~GameStick();
 
@@ -104,43 +115,71 @@ private:
 	float pPosition_y = 0.0f;
 	float pWidth = 0.0f;
 	float pHeight = 0.0f;
-	float pSpeed = 0.01f;
+	float pSpeed = 0.2f;
 };
 
-/**
-class Ball : public TriangleGameComponent
+
+class Ball 
 {
 public:
 
-	Ball(Game* game, std::vector<DirectX::XMFLOAT4> points, std::vector<int> indices);
+	Ball(Game* game, float pos_x, float pos_y, float width, float height);
 
 
-	void ChangePoints(float deltaTime, GameStick* player, Enemy* enemy);
+	void Update(float updateTime, GameStick* player, Enemy* enemy);
+
+	TriangleGameComponent* GetBall();
+
+	float GetXPosition();
+
+	float GetYPosition();
+
+	bool CheckCollisionsPlayer(GameStick* player, float deltaTime);
+
+	bool CheckCollisionsEnemy(Enemy* player, float deltaTime);
+	float GetWidth();
+
+	float GetHeight();
 
 	void Reset();
-	float GetYVector();
 
 	~Ball();
 
 private:
-	void CheckPlayersCollisions(GameStick* player, Enemy* enemy, float deltaTime);
-	void CheckCollisions(float pos_1_x, float pos_2_x, float pos_3_x, float pos_4_x, float pos_1_y, float pos_2_y, float pos_3_y, float pos_4_y, GameStick* player, Enemy* enemy);
-	DirectX::XMFLOAT2 direction = { 1.0f, 0.0f };
-	float speed = 0.01f;
+	TriangleGameComponent* pBall = nullptr;
+	float pPosition_x = 0.0f;
+	float pPosition_y = 0.0f;
+	float pWidth = 0.0f;
+	float pHeight = 0.0f;
+	float direction_y = 0;
+	float direction_x = 1;
+ 	float speed = 0.2;
 };
 
-
-
-class Enemy : public TriangleGameComponent
+class Enemy 
 {
 public:
-	Enemy(Game* GameObject, std::vector<DirectX::XMFLOAT4> points, std::vector<int> indices);
-	void ChangePoints(float deltaTime, float last_ball_location);
+	Enemy (Game* game, float pos_x, float pos_y, float width, float height);
+
+	void Update(float updateTime, Ball*);
+
+	TriangleGameComponent* GetEnemy();
+
+	float GetXPosition();
+
+	float GetYPosition();
+
+	float GetWidth();
 
 	void Reset();
-	DirectX::XMFLOAT4* GetPoints();
+	float GetHeight();
+
 	~Enemy();
 private:
-	float speed = 0.01;
+	TriangleGameComponent* pEnemy = nullptr;
+	float pPosition_x = 0.0f;
+	float pPosition_y = 0.0f;
+	float pWidth = 0.0f;
+	float pHeight = 0.0f;
+	float pSpeed = 0.2f;
 };
-*/

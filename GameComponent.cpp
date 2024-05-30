@@ -3,7 +3,7 @@
 
 struct ConstantBuffer
 {
-	DirectX::XMFLOAT3 offset;
+	DirectX::XMFLOAT4 offset;
 };
 
 TriangleGameComponent::TriangleGameComponent(Game* GameObject, std::vector<DirectX::XMFLOAT4> points, std::vector<int> indices) : pGame(GameObject), pPoints(points), pIndices(indices)
@@ -13,10 +13,6 @@ TriangleGameComponent::TriangleGameComponent(Game* GameObject, std::vector<Direc
 
 void TriangleGameComponent::Initialize()
 {
-	ID3D11Buffer* VertexBuffer;
-	ID3D11Buffer* IndexBuffer;
-
-
 	D3D11_BUFFER_DESC vertexBufDesc;
 	vertexBufDesc.Usage = D3D11_USAGE_DEFAULT;
 	vertexBufDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -43,44 +39,23 @@ void TriangleGameComponent::Initialize()
 	indexData.SysMemPitch = 0;
 	indexData.SysMemSlicePitch = 0;
 
-	pGame->GetDevice()->CreateBuffer(&indexBufDesc, &indexData, &IndexBuffer);
+	auto hr = pGame->GetDevice()->CreateBuffer(&indexBufDesc, &indexData, &IndexBuffer);
 
+	ConstantBuffer cb = { DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f) };
+	D3D11_BUFFER_DESC constantBufDesc;
+	constantBufDesc.Usage = D3D11_USAGE_DYNAMIC;
+	constantBufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	constantBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	constantBufDesc.MiscFlags = 0;
+	constantBufDesc.StructureByteStride = 0;
+	constantBufDesc.ByteWidth = sizeof(ConstantBuffer);
+	D3D11_SUBRESOURCE_DATA constantData;
+	constantData.pSysMem = &cb;
+	constantData.SysMemPitch = 0;
+	constantData.SysMemSlicePitch = 0;
 
-	ID3D11Buffer* g_pConstantBuffer11 = NULL;
-	ConstantBuffer VsConstData;
-	VsConstData.offset = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-	// Fill in a buffer description.
-	D3D11_BUFFER_DESC cbDesc;
-	cbDesc.ByteWidth = sizeof(ConstantBuffer);
-	cbDesc.Usage = D3D11_USAGE_DYNAMIC;
-	cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	cbDesc.MiscFlags = 0;
-	cbDesc.StructureByteStride = 0;
-
-	// Fill in the subresource data.
-	D3D11_SUBRESOURCE_DATA InitData;
-	InitData.pSysMem = &VsConstData;
-	InitData.SysMemPitch = 0;
-	InitData.SysMemSlicePitch = 0;
-
-	// Create the buffer.
-	auto hr = pGame->GetDevice()->CreateBuffer(&cbDesc, &InitData,
-		&g_pConstantBuffer11);
-
-	if (FAILED(hr))
-	{
-		std::cout << "Could not create constant buffer" << std::endl;
-	}
-
-	UINT strides[] = { 32 };
-	UINT offsets[] = { 0 };
-
-	pGame->GetDeviceContext()->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	pGame->GetDeviceContext()->IASetVertexBuffers(0, 1, &VertexBuffer, strides, offsets);
+	hr = pGame->GetDevice()->CreateBuffer(&constantBufDesc, &constantData, &ConstantBuff);
 	pGame->GetDeviceContext()->IASetInputLayout(pInputLayout);
-	
 }
 
 void TriangleGameComponent::CreateShadersAndInputLayout()
@@ -148,18 +123,26 @@ void TriangleGameComponent::CreateShadersAndInputLayout()
 
 void TriangleGameComponent::Draw()
 {
+	UINT strides[] = { 32 };
+	UINT offsets[] = { 0 };
+	pGame->GetDeviceContext()->VSSetConstantBuffers(0, 1, &ConstantBuff);
+	pGame->GetDeviceContext()->IASetIndexBuffer(IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	pGame->GetDeviceContext()->IASetVertexBuffers(0, 1, &VertexBuffer, strides, offsets);
 	pGame->GetDeviceContext()->DrawIndexed(pIndices.size(), 0, 0);
 }
 
-void TriangleGameComponent::Reload()
+void TriangleGameComponent::Reload(DirectX::XMFLOAT4 position)
 {
+	pPosition = position;
 }
 
-void TriangleGameComponent::Update(DirectX::XMFLOAT3 position)
+void TriangleGameComponent::Update()
 {
-	/*
-	pGame->GetDeviceContext()->UpdateSubresource(pConstantBuffer, 0, nullptr, &position, 0, 0);
-	pGame->GetDeviceContext()->VSSetConstantBuffers(0, 1, &pConstantBuffer); */
+	ConstantBuffer new_pos = { pPosition };
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	pGame->GetDeviceContext()->Map(ConstantBuff, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	memcpy(mappedResource.pData, &new_pos, sizeof(ConstantBuffer));
+	pGame->GetDeviceContext()->Unmap(ConstantBuff, 0);
 }
 
 void TriangleGameComponent::DestroyResources()
@@ -194,16 +177,15 @@ GameStick::GameStick(Game* game, float pos_x, float pos_y, float width, float he
 
 void GameStick::UP_DOWN(Keys key, float deltaTime)
 {
-	if (key == Keys::S && (pPosition_y - pHeight / 2) - pSpeed * deltaTime > -1.0f)
+	if (key == Keys::S && (pPosition_y - pHeight / 2) - pSpeed * deltaTime >= -1.0f)
 	{
 		pPosition_y -= pSpeed * deltaTime;
-		pStick->Update(DirectX::XMFLOAT3(0.0f, -(pSpeed * deltaTime), 0.0f));
 	}
-	else if (key == Keys::W && (pPosition_y + pHeight / 2) + pSpeed * deltaTime < 1.0f)
+	else if (key == Keys::W && (pPosition_y + pHeight / 2) + pSpeed * deltaTime <= 1.0f)
 	{
 		pPosition_y += pSpeed * deltaTime;
-		pStick->Update(DirectX::XMFLOAT3(0.0f, pSpeed * deltaTime, 0.0f));
 	}
+	pStick->Reload(DirectX::XMFLOAT4(0.0f, pPosition_y, 0.0f, 0.0f));
 }
 
 TriangleGameComponent* GameStick::GetStick()
@@ -224,6 +206,12 @@ float GameStick::GetYPosition()
 float GameStick::GetWidth()
 {
 	return pWidth;
+}
+
+void GameStick::Reset()
+{
+	pPosition_y = 0.0f;
+	pStick->Reload(DirectX::XMFLOAT4(0, 0, 0.0f, 0.0f));
 }
 
 float GameStick::GetHeight()
@@ -367,3 +355,183 @@ Enemy::~Enemy()
 {
 }
 */
+
+Ball::Ball(Game* game, float pos_x, float pos_y, float width, float height) : pPosition_x(pos_x), pPosition_y(pos_y), pWidth(width), pHeight(height)
+{
+	std::vector<DirectX::XMFLOAT4> points =
+	{
+		DirectX::XMFLOAT4(pos_x - width / 2, pos_y + height / 2, 0.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		DirectX::XMFLOAT4(pos_x + width / 2, pos_y + height / 2, 0.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		DirectX::XMFLOAT4(pos_x - width / 2, pos_y - height / 2, 0.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		DirectX::XMFLOAT4(pos_x + width / 2, pos_y - height / 2, 0.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)
+	};
+
+	std::vector <int> indices = { 0,1,2,2,1,3 };
+	pBall = new TriangleGameComponent(game, points, indices);
+}
+
+void Ball::Update(float deltaTime, GameStick* player, Enemy* enemy)
+{
+	if (CheckCollisionsPlayer(player, deltaTime))
+	{
+		speed += 0.0001f;
+		float angle = ((pPosition_y + speed * deltaTime * direction_y - player->GetYPosition()) / player->GetHeight() / 2);
+		direction_y = angle * 2;
+		direction_x = -direction_x;
+	}
+	else if (CheckCollisionsEnemy(enemy, deltaTime))
+	{
+		speed += 0.0001f;
+		float angle = ((pPosition_y + speed * deltaTime * direction_y - enemy->GetYPosition()) / enemy->GetHeight() / 2);
+		direction_y = angle * 2;
+		direction_x = -direction_x;
+	}
+	else if ((pPosition_x + deltaTime * speed * direction_x) - pWidth / 2 <= -1.0f)
+	{
+		pBall->GetGame()->Update(false);
+	}
+	else if ((pPosition_x + deltaTime * speed * direction_x) + pWidth / 2 >= 1.0f)
+	{
+		pBall->GetGame()->Update(true);
+	}
+	else if ((pPosition_y + deltaTime * speed * direction_y) - pHeight / 2 <= -1.0f)
+	{
+		direction_y = -direction_y;
+	}
+	else if ((pPosition_y + deltaTime * speed * direction_y) + pHeight / 2 >= 1.0f)
+	{
+		direction_y = -direction_y;
+	}
+	pPosition_x += deltaTime * speed * direction_x;
+	pPosition_y += deltaTime * speed * direction_y;
+	pBall->Reload(DirectX::XMFLOAT4(pPosition_x, pPosition_y, 0.0f, 0.0f));
+}
+
+bool Ball::CheckCollisionsPlayer(GameStick* player, float deltaTime)
+{
+	float minX1 = (pPosition_x + speed * deltaTime * direction_x) - pWidth / 2;
+	float maxX1 = (pPosition_x + speed * deltaTime * direction_x) + pWidth / 2;
+	float minY1 = (pPosition_y + speed * deltaTime * direction_y) - pHeight / 2;
+	float maxY1 = (pPosition_y + speed * deltaTime * direction_y) + pHeight / 2;
+
+	float minX2 = player->GetXPosition() - player->GetWidth() / 2;
+	float maxX2 = player->GetXPosition() + player->GetWidth() / 2;
+	float minY2 = player->GetYPosition() - player->GetHeight() / 2;
+	float maxY2 = player->GetYPosition() + player->GetHeight() / 2;
+	return !(maxX1 < minX2 || minX1 > maxX2 || maxY1 < minY2 || minY1 > maxY2);
+}
+
+bool Ball::CheckCollisionsEnemy(Enemy* player, float deltaTime)
+{
+	float minX1 = (pPosition_x + speed * deltaTime * direction_x) - pWidth / 2;
+	float maxX1 = (pPosition_x + speed * deltaTime * direction_x) + pWidth / 2;
+	float minY1 = (pPosition_y + speed * deltaTime * direction_y) - pHeight / 2;
+	float maxY1 = (pPosition_y + speed * deltaTime * direction_y) + pHeight / 2;
+
+	float minX2 = player->GetXPosition() - player->GetWidth() / 2;
+	float maxX2 = player->GetXPosition() + player->GetWidth() / 2;
+	float minY2 = player->GetYPosition() - player->GetHeight() / 2;
+	float maxY2 = player->GetYPosition() + player->GetHeight() / 2;
+	return !(maxX1 < minX2 || minX1 > maxX2 || maxY1 < minY2 || minY1 > maxY2);
+}
+TriangleGameComponent* Ball::GetBall()
+{
+	return pBall;
+}
+
+float Ball::GetXPosition()
+{
+	return pPosition_x;
+}
+
+float Ball::GetYPosition()
+{
+	return pPosition_y;
+}
+
+float Ball::GetWidth()
+{
+	return pWidth;
+}
+
+float Ball::GetHeight()
+{
+	return pHeight;
+}
+
+void Ball::Reset()
+{
+	pPosition_x = 0.0f;
+	pPosition_y = 0.0f;
+	float direction_y = 0;
+	float direction_x = 1;
+	speed = 0.2f;
+	pBall->Reload(DirectX::XMFLOAT4(0, 0, 0.0f, 0.0f));
+}
+
+Ball::~Ball()
+{
+}
+
+Enemy::Enemy(Game* game, float pos_x, float pos_y, float width, float height) : pPosition_x(pos_x), pPosition_y(pos_y), pWidth(width), pHeight(height)
+{
+	std::vector<DirectX::XMFLOAT4> points =
+	{
+		DirectX::XMFLOAT4(pos_x - width / 2, pos_y + height / 2, 0.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		DirectX::XMFLOAT4(pos_x + width / 2, pos_y + height / 2, 0.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		DirectX::XMFLOAT4(pos_x - width / 2, pos_y - height / 2, 0.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		DirectX::XMFLOAT4(pos_x + width / 2, pos_y - height / 2, 0.0f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)
+	};
+
+	std::vector <int> indices = { 0,1,2,2,1,3 };
+	pEnemy = new TriangleGameComponent(game, points, indices);
+}
+
+void Enemy::Update(float updateTime, Ball* ball)
+{
+	if (pPosition_y < ball->GetYPosition() && pPosition_y + pHeight / 2 < 1.0f)
+	{
+		pPosition_y += updateTime * pSpeed;
+	}
+	else if(pPosition_y > ball->GetYPosition() && pPosition_y - pHeight / 2 > -1.0f)
+	{
+		pPosition_y -= updateTime * pSpeed;
+	}
+	pEnemy->Reload(DirectX::XMFLOAT4(0, pPosition_y, 0.0f, 0.0f));
+}
+
+TriangleGameComponent* Enemy::GetEnemy()
+{
+	return pEnemy;
+}
+
+float Enemy::GetXPosition()
+{
+	return pPosition_x;
+}
+
+float Enemy::GetYPosition()
+{
+	return pPosition_y;
+}
+
+float Enemy::GetWidth()
+{
+	return pWidth;
+}
+
+void Enemy::Reset()
+{
+	pPosition_y = 0.0f;
+	pEnemy->Reload(DirectX::XMFLOAT4(0, 0, 0.0f, 0.0f));
+}
+
+float Enemy::GetHeight()
+{
+	return pHeight;
+}
+
+Enemy::~Enemy()
+{
+
+}
