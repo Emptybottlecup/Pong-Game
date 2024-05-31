@@ -376,18 +376,19 @@ void Ball::Update(float deltaTime, GameStick* player, Enemy* enemy)
 	{
 		speed += 0.0001f;
 		float angle = ((pPosition_y + speed * deltaTime * direction_y - player->GetYPosition()) / player->GetHeight() / 2);
-		direction_y = angle * 2;
+		direction_y =  angle * 2;
 		direction_x = -direction_x;
-		pBall->GetGame()->PushBalls(new Ball(pBall->GetGame(), 0, 0, pWidth, pHeight, direction_x, -direction_y));
+		wasCollided = true;
 	}
-	/*
+
 	else if (CheckCollisionsEnemy(enemy, deltaTime))
 	{
 		speed += 0.0001f;
 		float angle = ((pPosition_y + speed * deltaTime * direction_y - enemy->GetYPosition()) / enemy->GetHeight() / 2);
 		direction_y = angle * 2;
 		direction_x = -direction_x;
-	} */
+		wasCollided = true;
+	} 
 	else if ((pPosition_x + deltaTime * speed * direction_x) - pWidth / 2 <= -1.0f)
 	{
 		direction_x = -direction_x;
@@ -423,6 +424,7 @@ bool Ball::CheckCollisionsPlayer(GameStick* player, float deltaTime)
 	return !(maxX1 < minX2 || minX1 > maxX2 || maxY1 < minY2 || minY1 > maxY2);
 }
 
+
 bool Ball::CheckCollisionsEnemy(Enemy* player, float deltaTime)
 {
 	float minX1 = (pPosition_x + speed * deltaTime * direction_x) - pWidth / 2;
@@ -434,8 +436,10 @@ bool Ball::CheckCollisionsEnemy(Enemy* player, float deltaTime)
 	float maxX2 = player->GetXPosition() + player->GetWidth() / 2;
 	float minY2 = player->GetYPosition() - player->GetHeight() / 2;
 	float maxY2 = player->GetYPosition() + player->GetHeight() / 2;
+
 	return !(maxX1 < minX2 || minX1 > maxX2 || maxY1 < minY2 || minY1 > maxY2);
 }
+
 TriangleGameComponent* Ball::GetBall()
 {
 	return pBall;
@@ -444,6 +448,26 @@ TriangleGameComponent* Ball::GetBall()
 float Ball::GetXPosition()
 {
 	return pPosition_x;
+}
+
+float Ball::GetXDirection()
+{
+	return direction_x;
+}
+
+float Ball::GetYDirection()
+{
+	return direction_y;
+}
+
+void Ball::SetXPosition(float pos_x)
+{
+	pPosition_x = pos_x;
+}
+
+void Ball::SetYPosition(float pos_y)
+{
+	pPosition_y = pos_y;
 }
 
 float Ball::GetYPosition()
@@ -456,9 +480,19 @@ float Ball::GetWidth()
 	return pWidth;
 }
 
+void Ball::SetCollideFalse()
+{
+	wasCollided = false;
+}
+
 float Ball::GetHeight()
 {
 	return pHeight;
+}
+
+bool Ball::WasCollided()
+{
+	return wasCollided;
 }
 
 void Ball::Reset()

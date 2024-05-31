@@ -2,56 +2,32 @@
 #include <iostream>
 #include <chrono>
 
-std::vector<int> GameStickIndices = { 0, 1, 2,2,1,3 };
-std::vector<DirectX::XMFLOAT4> GameStickPoints =
-{
-	DirectX::XMFLOAT4(-1.0f, 0.1f, 0.5f, 1.0f),	DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(-0.98f, 0.1f, 0.5f,1.0f),	DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(-1.0f, -0.1f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(-0.98f, -0.1f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)
-};
-
-std::vector<int> BallIndices = { 0, 1, 2,2, 1,3 };
-
-std::vector<DirectX::XMFLOAT4> BallPoints =
-{
-	DirectX::XMFLOAT4(-0.02f, 0.02f, 0.5f, 1.0f),	DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(0.02f, 0.02f, 0.5f,1.0f),	DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(-0.02f, -0.02f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(0.02f, -0.02f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)
-};
-
-std::vector<int> EnemyIndices = { 0, 1, 2,2,1,3 };
-std::vector<DirectX::XMFLOAT4> EnemyPoints =
-{
-	DirectX::XMFLOAT4(0.98f, 0.1f, 0.5f, 1.0f),	DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(1.0f, 0.1f, 0.5f,1.0f),	DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(0.98f, -0.1f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-	DirectX::XMFLOAT4(1.0f, -0.1f, 0.5f, 1.0f), DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f)
-};
-
 Game::Game() : pWindow(pWidth, pHeight)
 {
 	pInput = new InputDevice(this);
 	CreateDeviceAndSwapChain();
 	pStick = new GameStick(this, -0.975f, 0.0f, 0.05f, 0.2f);
 	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, 1, 0));
+	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, -1, 0));
 	pEnemy = new Enemy(this, 0.975f, 0.0f, 0.05f, 0.02f);
 	pGameComponents.push_back(pStick->GetStick());
 	pGameComponents.push_back(pEnemy->GetEnemy());
 	pGameComponents.push_back(pBalls[0]->GetBall());
+	pGameComponents.push_back(pBalls[1]->GetBall());
 }
 
 Game::Game(int Width, int Height) : pWidth(Width), pHeight(Height), pWindow(pWidth, pHeight)
 {
 	pInput = new InputDevice(this);
 	CreateDeviceAndSwapChain();
-	pStick = new GameStick(this,-0.975f, 0.0f, 0.01f, 0.2f);
-	pBalls.push_back (new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f,1,0));
-	pEnemy = new Enemy(this, 0.975f, 0.0f, 0.01f, 0.2f);
-	pGameComponents.push_back(pEnemy->GetEnemy());
+	pStick = new GameStick(this, -0.99f, 0.0f, 0.02f, 0.2f);
+	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, 1, 0));
+	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, -1, 0));
+	pEnemy = new Enemy(this, 0.99f, 0.0f, 0.02f, 0.2f);
 	pGameComponents.push_back(pStick->GetStick());
+	pGameComponents.push_back(pEnemy->GetEnemy());
 	pGameComponents.push_back(pBalls[0]->GetBall());
+	pGameComponents.push_back(pBalls[1]->GetBall());
 }
 
 void Game::CreateDeviceAndSwapChain()
@@ -180,6 +156,7 @@ void Game::Run()
 			pEnemy->Update(deltaTime, pBalls[0]);
 			if (pInput->IsKeyDown(Keys::S))
 			{
+				std::cout << pBalls.size() << std::endl;
 				pStick->UP_DOWN(Keys::S, deltaTime);
 			}
 			else if (pInput->IsKeyDown(Keys::W))
@@ -199,7 +176,24 @@ void Game::Run()
 			start = true;
 		}
 
-	
+		for(auto ball: pBalls)
+		{
+			if (ball->WasCollided())
+			{
+				newBalls.push_back(new Ball(this, 0, 0, ball->GetWidth(), ball->GetHeight(), (ball->GetXDirection()), -(ball->GetYDirection())));
+				newBalls[newBalls.size() - 1]->GetBall()->Initialize();
+				newBalls[newBalls.size() - 1]->SetXPosition(ball->GetXPosition());
+				newBalls[newBalls.size() - 1]->SetYPosition(ball->GetYPosition());
+				ball->SetCollideFalse();
+			}
+		}
+
+		for (auto ball : newBalls)
+		{
+			PushBalls(ball);
+			pGameComponents.push_back(ball->GetBall());
+		}
+		newBalls.clear();
 		pSwapChain->Present(1, 0);
 	}
 }
@@ -216,6 +210,7 @@ void Game::Update(bool goal)
 		++PlayerScore;
 	};
 	pBalls[0]->Reset();
+	pBalls[1]->Reset();
 	pEnemy->Reset();
 	pStick->Reset();
 	start = false;
@@ -242,9 +237,7 @@ void Game::Update(bool goal)
 
 void Game::PushBalls(Ball* newBall)
 {
-	newBall->GetBall()->Initialize();
 	pBalls.push_back(newBall);
-	pGameComponents.push_back(newBall->GetBall());
 }
 
 void Game::DeleteResources()

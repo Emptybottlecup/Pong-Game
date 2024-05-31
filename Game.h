@@ -58,6 +58,7 @@ private:
 	bool start = false;
 	GameStick* pStick;
 	std::vector<Ball*> pBalls;
+	std::vector<Ball*> newBalls;
 	Enemy* pEnemy;
 	InputDevice* pInput;
 	DisplayWin32 pWindow;

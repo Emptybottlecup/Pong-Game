@@ -132,14 +132,25 @@ public:
 
 	float GetXPosition();
 
+	float GetXDirection();
+
+	float GetYDirection();
+
+	void SetXPosition(float pos_x);
+
+	void SetYPosition(float pos_y);
 	float GetYPosition();
 
 	bool CheckCollisionsPlayer(GameStick* player, float deltaTime);
 
 	bool CheckCollisionsEnemy(Enemy* player, float deltaTime);
+
 	float GetWidth();
 
+	void SetCollideFalse();
 	float GetHeight();
+
+	bool WasCollided();
 
 	void Reset();
 
@@ -147,13 +158,14 @@ public:
 
 private:
 	TriangleGameComponent* pBall = nullptr;
+	bool wasCollided = false;
 	float pPosition_x = 0.0f;
 	float pPosition_y = 0.0f;
 	float pWidth = 0.0f;
 	float pHeight = 0.0f;
 	float direction_y = 0;
 	float direction_x = 1;
- 	float speed = 0.2;
+ 	float speed = 0.05f;
 };
 
 class Enemy 
