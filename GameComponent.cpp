@@ -356,7 +356,7 @@ Enemy::~Enemy()
 }
 */
 
-Ball::Ball(Game* game, float pos_x, float pos_y, float width, float height) : pPosition_x(pos_x), pPosition_y(pos_y), pWidth(width), pHeight(height)
+Ball::Ball(Game* game, float pos_x, float pos_y, float width, float height , float direcxtion_x, float direction_y) : pPosition_x(pos_x), pPosition_y(pos_y), pWidth(width), pHeight(height), direction_x(direcxtion_x), direction_y(direction_y)
 {
 	std::vector<DirectX::XMFLOAT4> points =
 	{
@@ -378,21 +378,23 @@ void Ball::Update(float deltaTime, GameStick* player, Enemy* enemy)
 		float angle = ((pPosition_y + speed * deltaTime * direction_y - player->GetYPosition()) / player->GetHeight() / 2);
 		direction_y = angle * 2;
 		direction_x = -direction_x;
+		pBall->GetGame()->PushBalls(new Ball(pBall->GetGame(), 0, 0, pWidth, pHeight, direction_x, -direction_y));
 	}
+	/*
 	else if (CheckCollisionsEnemy(enemy, deltaTime))
 	{
 		speed += 0.0001f;
 		float angle = ((pPosition_y + speed * deltaTime * direction_y - enemy->GetYPosition()) / enemy->GetHeight() / 2);
 		direction_y = angle * 2;
 		direction_x = -direction_x;
-	}
+	} */
 	else if ((pPosition_x + deltaTime * speed * direction_x) - pWidth / 2 <= -1.0f)
 	{
-		pBall->GetGame()->Update(false);
+		direction_x = -direction_x;
 	}
 	else if ((pPosition_x + deltaTime * speed * direction_x) + pWidth / 2 >= 1.0f)
 	{
-		pBall->GetGame()->Update(true);
+		direction_x = -direction_x;
 	}
 	else if ((pPosition_y + deltaTime * speed * direction_y) - pHeight / 2 <= -1.0f)
 	{

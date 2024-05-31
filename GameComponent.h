@@ -123,7 +123,7 @@ class Ball
 {
 public:
 
-	Ball(Game* game, float pos_x, float pos_y, float width, float height);
+	Ball(Game* game, float pos_x, float pos_y, float width, float height, float direction_x, float direction_y);
 
 
 	void Update(float updateTime, GameStick* player, Enemy* enemy);

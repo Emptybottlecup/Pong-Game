@@ -44,6 +44,7 @@ public:
 
 	void Update(bool goal);
 
+	void PushBalls(Ball* newBall);
 	void DeleteResources();
 
 	HWND* GetWindowHandle();
@@ -56,7 +57,7 @@ private:
 	int EnemyScore = 0;
 	bool start = false;
 	GameStick* pStick;
-	Ball* pBall;
+	std::vector<Ball*> pBalls;
 	Enemy* pEnemy;
 	InputDevice* pInput;
 	DisplayWin32 pWindow;

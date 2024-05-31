@@ -35,11 +35,11 @@ Game::Game() : pWindow(pWidth, pHeight)
 	pInput = new InputDevice(this);
 	CreateDeviceAndSwapChain();
 	pStick = new GameStick(this, -0.975f, 0.0f, 0.05f, 0.2f);
-	pBall = new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f);
+	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, 1, 0));
 	pEnemy = new Enemy(this, 0.975f, 0.0f, 0.05f, 0.02f);
-	pGameComponents.push_back(pBall->GetBall());
 	pGameComponents.push_back(pStick->GetStick());
 	pGameComponents.push_back(pEnemy->GetEnemy());
+	pGameComponents.push_back(pBalls[0]->GetBall());
 }
 
 Game::Game(int Width, int Height) : pWidth(Width), pHeight(Height), pWindow(pWidth, pHeight)
@@ -47,12 +47,11 @@ Game::Game(int Width, int Height) : pWidth(Width), pHeight(Height), pWindow(pWid
 	pInput = new InputDevice(this);
 	CreateDeviceAndSwapChain();
 	pStick = new GameStick(this,-0.975f, 0.0f, 0.01f, 0.2f);
-	pBall = new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f);
+	pBalls.push_back (new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f,1,0));
 	pEnemy = new Enemy(this, 0.975f, 0.0f, 0.01f, 0.2f);
-	pGameComponents.push_back(pBall->GetBall());
 	pGameComponents.push_back(pEnemy->GetEnemy());
 	pGameComponents.push_back(pStick->GetStick());
-	
+	pGameComponents.push_back(pBalls[0]->GetBall());
 }
 
 void Game::CreateDeviceAndSwapChain()
@@ -152,7 +151,6 @@ void Game::Run()
 			DispatchMessage(&msg);
 		}
 
-		// If windows signals to end the application then exit out.
 		if (msg.message == WM_QUIT) {
 			isExitRequested = true;
 		}
@@ -175,7 +173,11 @@ void Game::Run()
 
 		if (start)
 		{
-			pEnemy->Update(deltaTime, pBall);
+			for (auto pBall : pBalls)
+			{
+				pBall->Update(deltaTime, pStick, pEnemy);
+			}
+			pEnemy->Update(deltaTime, pBalls[0]);
 			if (pInput->IsKeyDown(Keys::S))
 			{
 				pStick->UP_DOWN(Keys::S, deltaTime);
@@ -184,7 +186,6 @@ void Game::Run()
 			{
 				pStick->UP_DOWN(Keys::W, deltaTime);
 			}
-			pBall->Update(deltaTime, pStick, pEnemy);
 		}
 
 		for (auto object : pGameComponents)
@@ -213,8 +214,8 @@ void Game::Update(bool goal)
 	if (goal)
 	{
 		++PlayerScore;
-	}
-	pBall->Reset();
+	};
+	pBalls[0]->Reset();
 	pEnemy->Reset();
 	pStick->Reset();
 	start = false;
@@ -237,6 +238,13 @@ void Game::Update(bool goal)
 		EnemyScore = 0;
 	}
 	std::cout << "PRESS ENTER TO CONTINUE" << std::endl;
+}
+
+void Game::PushBalls(Ball* newBall)
+{
+	newBall->GetBall()->Initialize();
+	pBalls.push_back(newBall);
+	pGameComponents.push_back(newBall->GetBall());
 }
 
 void Game::DeleteResources()
