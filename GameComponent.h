@@ -126,7 +126,7 @@ public:
 	Ball(Game* game, float pos_x, float pos_y, float width, float height, float direction_x, float direction_y);
 
 
-	void Update(float updateTime, GameStick* player, Enemy* enemy);
+	void Update(float updateTime, GameStick* player, GameStick* enemy);
 
 	TriangleGameComponent* GetBall();
 
@@ -148,6 +148,7 @@ public:
 	float GetWidth();
 
 	void SetCollideFalse();
+
 	float GetHeight();
 
 	bool WasCollided();
@@ -162,6 +163,7 @@ private:
 	float pPosition_x = 0.0f;
 	float pPosition_y = 0.0f;
 	float pWidth = 0.0f;
+	int health = 3;
 	float pHeight = 0.0f;
 	float direction_y = 0;
 	float direction_x = 1;

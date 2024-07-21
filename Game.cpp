@@ -1,6 +1,15 @@
 #include "Game.h"
 #include <iostream>
 #include <chrono>
+#include<random> 
+#include<ctime>
+
+int RandNumber(int min, int max)
+{
+	static std::mt19937 gen(time(NULL));
+	std::uniform_int_distribution<> uid(min, max);
+	return uid(gen);
+}
 
 Game::Game() : pWindow(pWidth, pHeight)
 {
@@ -8,26 +17,22 @@ Game::Game() : pWindow(pWidth, pHeight)
 	CreateDeviceAndSwapChain();
 	pStick = new GameStick(this, -0.975f, 0.0f, 0.05f, 0.2f);
 	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, 1, 0));
-	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, -1, 0));
-	pEnemy = new Enemy(this, 0.975f, 0.0f, 0.05f, 0.02f);
+	pEnemy = new GameStick(this, 0.975f, 0.0f, 0.05f, 0.02f);
 	pGameComponents.push_back(pStick->GetStick());
-	pGameComponents.push_back(pEnemy->GetEnemy());
+	pGameComponents.push_back(pEnemy->GetStick());
 	pGameComponents.push_back(pBalls[0]->GetBall());
-	pGameComponents.push_back(pBalls[1]->GetBall());
 }
 
 Game::Game(int Width, int Height) : pWidth(Width), pHeight(Height), pWindow(pWidth, pHeight)
 {
 	pInput = new InputDevice(this);
 	CreateDeviceAndSwapChain();
-	pStick = new GameStick(this, -0.99f, 0.0f, 0.02f, 0.2f);
+	pStick = new GameStick(this, -0.975f, 0.0f, 0.02f, 0.2f);
 	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, 1, 0));
-	pBalls.push_back(new Ball(this, 0.0f, 0.0f, 0.05f, 0.05f, -1, 0));
-	pEnemy = new Enemy(this, 0.99f, 0.0f, 0.02f, 0.2f);
+	pEnemy = new GameStick(this, 0.975f, 0.0f, 0.02f, 0.2f);
 	pGameComponents.push_back(pStick->GetStick());
-	pGameComponents.push_back(pEnemy->GetEnemy());
+	pGameComponents.push_back(pEnemy->GetStick());
 	pGameComponents.push_back(pBalls[0]->GetBall());
-	pGameComponents.push_back(pBalls[1]->GetBall());
 }
 
 void Game::CreateDeviceAndSwapChain()
@@ -153,15 +158,21 @@ void Game::Run()
 			{
 				pBall->Update(deltaTime, pStick, pEnemy);
 			}
-			pEnemy->Update(deltaTime, pBalls[0]);
 			if (pInput->IsKeyDown(Keys::S))
 			{
-				std::cout << pBalls.size() << std::endl;
 				pStick->UP_DOWN(Keys::S, deltaTime);
 			}
 			else if (pInput->IsKeyDown(Keys::W))
 			{
 				pStick->UP_DOWN(Keys::W, deltaTime);
+			}
+			if (pInput->IsKeyDown(Keys::Up))
+			{
+				pEnemy->UP_DOWN(Keys::Up, deltaTime);
+			}
+			else if(pInput->IsKeyDown(Keys::Down))
+			{
+				pEnemy->UP_DOWN(Keys::Down, deltaTime);
 			}
 		}
 
@@ -180,7 +191,12 @@ void Game::Run()
 		{
 			if (ball->WasCollided())
 			{
-				newBalls.push_back(new Ball(this, 0, 0, ball->GetWidth(), ball->GetHeight(), (ball->GetXDirection()), -(ball->GetYDirection())));
+				int newdirection = 0;
+				while (newdirection != 0 && newdirection != 1)
+				{
+					newdirection = RandNumber(-5, 5);
+				}
+				newBalls.push_back(new Ball(this, 0, 0, ball->GetWidth(), ball->GetHeight(), (ball->GetXDirection()), (ball->GetYDirection() + newdirection)));
 				newBalls[newBalls.size() - 1]->GetBall()->Initialize();
 				newBalls[newBalls.size() - 1]->SetXPosition(ball->GetXPosition());
 				newBalls[newBalls.size() - 1]->SetYPosition(ball->GetYPosition());

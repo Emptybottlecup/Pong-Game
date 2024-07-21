@@ -59,7 +59,7 @@ private:
 	GameStick* pStick;
 	std::vector<Ball*> pBalls;
 	std::vector<Ball*> newBalls;
-	Enemy* pEnemy;
+	GameStick* pEnemy;
 	InputDevice* pInput;
 	DisplayWin32 pWindow;
 	std::vector<GameComponent*> pGameComponents;
